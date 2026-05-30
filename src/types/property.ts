@@ -7,3 +7,11 @@ export type Property = {
   rating: number
   image: string
 }
+export type Room = {
+  id: string
+  name: string
+  price: string
+  seatsTotal: number
+  seatsFree: number
+  hasAC: boolean
+}
