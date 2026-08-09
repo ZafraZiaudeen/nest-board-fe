@@ -15,3 +15,16 @@ export type Room = {
   seatsFree: number
   hasAC: boolean
 }
+
+export type PropertyDetail = {
+  id: string
+  title: string
+  address: string
+  amenities: string[]
+  rating: number
+  seatsAvailable: number
+  minStay: string
+  startingPrice: string
+  image: string
+  rooms: Room[]
+}
