@@ -1,68 +1,51 @@
-import { PropertyInfo } from "./components/PropertyInfo"
+import { useParams } from "react-router"
 import { PropertySection } from "./components/PropertySection"
-import type { Room } from "@/types/property"
+import { PropertyInfo } from "./components/PropertyInfo"
 import { RoomList } from "./components/RoomList"
-
-const mockProperty = {
-  id: "prop-detail-001",
-  rating: 4.8,
-  image:
-    "https://images.unsplash.com/photo-1580587771525-78b9dba3b914?w=1200&h=600&fit=crop",
-  title: "Green Villa Colombo",
-  address: "123 Galle Road, Colombo 03",
-  amenities: ["Villa", "AC", "Premium", "WiFi"],
-  seatsAvailable: 4,
-  minStay: "3 months",
-  startingPrice: "LKR 25K",
-  rooms: [
-    {
-      id: "room-a",
-      name: "Room A",
-      price: "35,000",
-      seatsTotal: 4,
-      seatsFree: 1,
-      hasAC: true,
-    },
-    {
-      id: "room-b",
-      name: "Room B",
-      price: "35,000",
-      seatsTotal: 4,
-      seatsFree: 2,
-      hasAC: true,
-    },
-    {
-      id: "room-c",
-      name: "Room C",
-      price: "25,000",
-      seatsTotal: 4,
-      seatsFree: 1,
-      hasAC: false,
-    },
-  ] satisfies Room[],
-}
+import { usePropertyDetail } from "@/hooks/usePropertyDetail"
 
 export function PropertyDetails() {
+  const { id } = useParams<{ id: string }>()
+  // const property = propertyDetails.find((p) => p.id === id)
+  const { data: property, isLoading, isError } = usePropertyDetail(id)
+
+  if (isLoading) {
+    return (
+      <div className="flex min-h-screen items-center justify-center">
+        <p className="text-gray-400">Loading property...</p>
+      </div>
+    )
+  }
+
+  if (isError || !property) {
+    return (
+      <div className="flex min-h-screen flex-col items-center justify-center gap-2">
+        <p className="text-xl font-semibold text-gray-700">
+          Property not found
+        </p>
+        <p className="text-sm text-gray-400">No property matches id: {id}</p>
+      </div>
+    )
+  }
+
   return (
     <div className="min-h-screen bg-gray-50">
-      <PropertySection
-        image={mockProperty.image}
-        rating={mockProperty.rating}
-      />
+      <PropertySection image={property.image} rating={property.rating} />
+
       <div className="px-4 pb-12">
         <div className="relative z-10 -mt-12">
           <PropertyInfo
-            title={mockProperty.title}
-            address={mockProperty.address}
-            amenities={mockProperty.amenities}
-            seatsAvailable={mockProperty.seatsAvailable}
-            minStay={mockProperty.minStay}
-            startingPrice={mockProperty.startingPrice}
+            title={property.title}
+            address={property.address}
+            amenities={property.amenities}
+            seatsAvailable={property.seatsAvailable}
+            minStay={property.minStay}
+            startingPrice={property.startingPrice}
           />
         </div>
 
         <div className="mt-5">
-          <RoomList rooms={mockProperty.rooms} />
+          <RoomList rooms={property.rooms} />
         </div>
       </div>
     </div>

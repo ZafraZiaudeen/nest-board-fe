@@ -10,13 +10,14 @@ import {
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import type { Property } from "@/types/property"
+import { useUIStore } from "@/stores/uiStore"
 
-type SearchFiltersProps = {
-  searchQuery: string
-  activeCategory: Property["type"] | "All"
-  onSearchChange: (value: string) => void
-  onCategoryChange: (value: Property["type"] | "All") => void
-}
+// type SearchFiltersProps = {
+  // searchQuery: string // Removed searchQuery prop as we are now using Zustand store for state management
+  // activeCategory: Property["type"] | "All"
+  // onSearchChange: (value: string) => void
+  // onCategoryChange: (value: Property["type"] | "All") => void
+// }
 
 interface Category {
   label: Property["type"] | "All"
@@ -31,12 +32,18 @@ const categories: Category[] = [
   { label: "Hotel", icon: Hotel },
 ]
 
-export function SearchFilters({
-  searchQuery,
-  activeCategory,
-  onSearchChange,
-  onCategoryChange,
-}: SearchFiltersProps) {
+// export function SearchFilters({
+  // searchQuery,
+  // activeCategory,
+  // onSearchChange,
+  // onCategoryChange,
+// }: SearchFiltersProps) 
+export function SearchFilters()
+{
+   const searchQuery = useUIStore((state) => state.searchQuery)
+  const setSearchQuery = useUIStore((state) => state.setSearchQuery)
+  const activeCategory = useUIStore((state) => state.activeCategory)
+  const setActiveCategory = useUIStore((state) => state.setActiveCategory)
   return (
     <div className="relative z-20 -mt-7 px-4">
       <div className="rounded-2xl bg-white p-8 shadow-xl">
@@ -48,7 +55,7 @@ export function SearchFilters({
               value={searchQuery}
               placeholder="Search by property name or city..."
               className="h-10 rounded-xl border-gray-200 pl-9"
-              onChange={(e) => onSearchChange(e.target.value)}
+              onChange={(e) => setSearchQuery(e.target.value)}
             />
           </div>
           <Button
@@ -67,7 +74,7 @@ export function SearchFilters({
               size="sm"
               variant={activeCategory === label ? "default" : "outline"}
               className="gap-1.5 rounded-full"
-              onClick={() => onCategoryChange(label)}
+                onClick={() => setActiveCategory(label)}
             >
               {Icon && <Icon />}
               {label}
@@ -78,3 +85,4 @@ export function SearchFilters({
     </div>
   )
 }
+

@@ -4,13 +4,17 @@ import { properties } from "@/data/properties"
 import { PropertyList } from "./components/PropertyList"
 import { SearchFilters } from "./components/SearchFilters"
 import type { Property } from "@/types/property"
-
+import { useProperties } from "@/hooks/useProperties"
+import { useUIStore } from "@/stores/uiStore"
 export function Home() {
-  const [searchQuery, setSearchQuery] = useState("")
-  const [activeCategory, setActiveCategory] = useState<
-    Property["type"] | "All"
-  >("House")
+  // const [searchQuery, setSearchQuery] = useState("")
+  // const [activeCategory, setActiveCategory] = useState<
+  //   Property["type"] | "All"
+  // >("House")
 
+  const { data: properties = [], isLoading, isError } = useProperties()
+  const searchQuery = useUIStore((state) => state.searchQuery)
+  const activeCategory = useUIStore((state) => state.activeCategory)
   const filterBySearch = (property: Property) => {
     return (
       searchQuery === "" ||
@@ -30,13 +34,21 @@ export function Home() {
   return (
     <>
       <HeroSection />
-      <SearchFilters
+      <SearchFilters />
+      {/* <SearchFilters
         searchQuery={searchQuery}
         activeCategory={activeCategory}
         onSearchChange={setSearchQuery}
         onCategoryChange={setActiveCategory}
-      />
-      <PropertyList properties={filteredProperties} />
+      /> */}
+      {isError && (
+        <div className="px-8 py-10 text-red-400">
+          Failed to load properties. Please try again.
+        </div>
+      )}
+      {!isLoading && !isError && (
+        <PropertyList properties={filteredProperties} />
+      )}
     </>
   )
 }
