@@ -1,37 +1,60 @@
-import type { Booking } from "@/types/booking"
+// import type { Booking } from "@/types/booking"
 
-const BASE = "http://localhost:3001/api/bookings"
+// const BASE = "http://localhost:3001/api/bookings"
 
-export async function fetchBookings(): Promise<Booking[]> {
-  const res = await fetch(BASE)
-  if (!res.ok) throw new Error("Failed to fetch bookings")
-  return res.json()
+// export async function fetchBookings(): Promise<Booking[]> {
+//   const res = await fetch(BASE)
+//   if (!res.ok) throw new Error("Failed to fetch bookings")
+//   return res.json()
+// }
+
+// export async function createBooking(data: Omit<Booking, "id">): Promise<Booking> {
+//   const res = await fetch(BASE, {
+//     method: "POST",
+//     headers: { "Content-Type": "application/json" },
+//     body: JSON.stringify(data),
+//   })
+//   if (!res.ok) throw new Error("Failed to create booking")
+//   return res.json()
+// }
+
+// export async function updateBooking(
+//   id: string,
+//   data: Partial<Booking>,
+// ): Promise<Booking> {
+//   const res = await fetch(`${BASE}/${id}`, {
+//     method: "PUT",
+//     headers: { "Content-Type": "application/json" },
+//     body: JSON.stringify(data),
+//   })
+//   if (!res.ok) throw new Error("Failed to update booking")
+//   return res.json()
+// }
+
+// export async function deleteBooking(id: string): Promise<void> {
+//   const res = await fetch(`${BASE}/${id}`, { method: "DELETE" })
+//   if (!res.ok) throw new Error("Failed to delete booking")
+// }
+
+
+import type { BookingDTO } from "@/types/booking"
+import { apiFetch } from "./client"
+
+export async function fetchMyBookings() {
+  return await apiFetch<BookingDTO[]>("/bookings/my", { auth: true })
 }
 
-export async function createBooking(data: Omit<Booking, "id">): Promise<Booking> {
-  const res = await fetch(BASE, {
+type CreateBookingInput = {
+  roomId: string
+  seatNumber: number
+  startMonth: string
+  durationMonths: number
+}
+
+export async function createBooking(input: CreateBookingInput) {
+  return apiFetch<BookingDTO>("/bookings", {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(data),
+    auth: true,
+    body: JSON.stringify(input),
   })
-  if (!res.ok) throw new Error("Failed to create booking")
-  return res.json()
-}
-
-export async function updateBooking(
-  id: string,
-  data: Partial<Booking>,
-): Promise<Booking> {
-  const res = await fetch(`${BASE}/${id}`, {
-    method: "PUT",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(data),
-  })
-  if (!res.ok) throw new Error("Failed to update booking")
-  return res.json()
-}
-
-export async function deleteBooking(id: string): Promise<void> {
-  const res = await fetch(`${BASE}/${id}`, { method: "DELETE" })
-  if (!res.ok) throw new Error("Failed to delete booking")
 }

@@ -11,7 +11,7 @@ import { ProtectedRoute } from "./components/auth/ProtectedRoute"
 import { AdminDashboard } from "./pages/admin/AdminDashboard"
 import { AdminProperties } from "./pages/admin/AdminProperties"
 import { AdminPropertyDetail } from "./pages/admin/AdminPropertyDetail"
-import { AdminBookings } from "./pages/admin/AdminBookings"
+// import { AdminBookings } from "./pages/admin/AdminBookings"
 import { AdminSettings } from "./pages/admin/AdminSettings"
 import { AdminProtectedRoute } from "./components/auth/AdminProtectedRoute"
 import { AdminThemeApplier } from "./components/auth/AdminThemeApplier"
@@ -67,7 +67,7 @@ export function App() {
               <Route index element={<AdminDashboard />} />
               <Route path="properties" element={<AdminProperties />} />
               <Route path="properties/:id" element={<AdminPropertyDetail />} />
-              <Route path="bookings" element={<AdminBookings />} />
+              {/* <Route path="bookings" element={<AdminBookings />} /> */}
               <Route path="settings" element={<AdminSettings />} />
             </Route>
 

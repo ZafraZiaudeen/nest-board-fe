@@ -45,8 +45,7 @@ export function PropertyDetails() {
         </div>
 
         <div className="mt-5">
-          <RoomList rooms={property.rooms} />
-        </div>
+ <RoomList rooms={property.roomTypes} />        </div>
       </div>
     </div>
   )

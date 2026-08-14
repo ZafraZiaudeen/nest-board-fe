@@ -1,12 +1,12 @@
 import { Card } from "@/components/ui/card"
 import { RoomCard } from "./RoomCard"
-import type { Room } from "@/types/property"
+import type { RoomType } from "@/types/property"
 
-type RoomListProps = {
-  rooms: Room[]
+type RoomTypeListProps = {
+    rooms: RoomType[]
 }
 
-export function RoomList({ rooms }: RoomListProps) {
+export function RoomList({ rooms }: RoomTypeListProps) {
   return (
     <Card className="gap-0 rounded-3xl p-6 shadow-sm ring-0">
       <h2 className="mb-5 text-xl font-bold text-gray-900">
