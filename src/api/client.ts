@@ -1,6 +1,7 @@
 import { API_URL } from "./config"
 
 const TOKEN_KEY = "nestboard_access_token"
+const REFRESH_KEY = "nestboard_refresh_token"
 
 export function getAccessToken() {
   return localStorage.getItem(TOKEN_KEY)
@@ -14,42 +15,77 @@ export function clearAccessToken() {
   localStorage.removeItem(TOKEN_KEY)
 }
 
+export function getRefreshToken() {
+  return localStorage.getItem(REFRESH_KEY)
+}
+
+export function setRefreshToken(token: string) {
+  localStorage.setItem(REFRESH_KEY, token)
+}
+
+export function clearRefreshToken() {
+  localStorage.removeItem(REFRESH_KEY)
+}
+
+export function clearAllTokens() {
+  clearAccessToken()
+  clearRefreshToken()
+}
+
+async function attemptTokenRefresh(): Promise<boolean> {
+  const refreshToken = getRefreshToken()
+  if (!refreshToken) return false
+
+  try {
+    const res = await fetch(`${API_URL}/auth/refresh`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ refreshToken }),
+    })
+
+    if (!res.ok) {
+      clearAllTokens()
+      return false
+    }
+
+    const data = await res.json()
+    setAccessToken(data.accessToken)
+    if (data.refreshToken) setRefreshToken(data.refreshToken)
+    return true
+  } catch {
+    clearAllTokens()
+    return false
+  }
+}
+
 type ApiOptions = RequestInit & {
   auth?: boolean
 }
 
-// TODO: implement with refresh token once the backend /auth/refresh endpoint is ready
-async function attemptTokenRefresh(): Promise<boolean> {
-  return false
-}
-
 export async function apiFetch<T>(path: string, options: ApiOptions = {}) {
-  const headers = new Headers(options.headers)
+  const { auth, ...fetchOptions } = options
+  const headers = new Headers(fetchOptions.headers)
   headers.set("Content-Type", "application/json")
 
-  if (options.auth) {
+  if (auth) {
     const token = getAccessToken()
     if (token) headers.set("Authorization", `Bearer ${token}`)
   }
 
-  const res = await fetch(`${API_URL}${path}`, { ...options, headers })
+  const res = await fetch(`${API_URL}${path}`, { ...fetchOptions, headers })
 
-  if (res.status === 401 && options.auth) {
+  if (res.status === 401 && auth) {
     const refreshed = await attemptTokenRefresh()
     if (refreshed) {
-      const retryHeaders = new Headers(options.headers)
+      const retryHeaders = new Headers(fetchOptions.headers)
       retryHeaders.set("Content-Type", "application/json")
       const newToken = getAccessToken()
       if (newToken) retryHeaders.set("Authorization", `Bearer ${newToken}`)
       const retryRes = await fetch(`${API_URL}${path}`, {
-        ...options,
+        ...fetchOptions,
         headers: retryHeaders,
       })
-      if (!retryRes.ok) {
-        let retryMsg = `API request failed: ${retryRes.status}`
-        try { const b = await retryRes.json(); if (b?.message) retryMsg = b.message } catch {}
-        throw new Error(retryMsg)
-      }
+      if (!retryRes.ok) throw new Error(`API request failed: ${retryRes.status}`)
       if (retryRes.status === 204) return undefined as T
       return retryRes.json() as Promise<T>
     }
