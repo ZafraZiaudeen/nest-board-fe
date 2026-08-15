@@ -1,4 +1,3 @@
-import { useUser } from "@clerk/react"
 import { ArrowLeft, Bell, Edit2, Menu, Plus, Star, Trash2 } from "lucide-react"
 import { useState } from "react"
 import { Link, useNavigate, useParams } from "react-router"

@@ -1,17 +1,13 @@
-import { useUser } from "@clerk/react"
+import { useAuth } from "@/components/auth/AuthProvider"
 import { Bell, Menu, Plus, User } from "lucide-react"
 import { useState } from "react"
 
 export function AdminSettings() {
-  const { user } = useUser()
+  const { user } = useAuth()
 
-  const [fullName, setFullName] = useState(user?.fullName ?? "")
-  const [email, setEmail] = useState(
-    user?.primaryEmailAddress?.emailAddress ?? "",
-  )
-  const [phone, setPhone] = useState(
-    (user?.phoneNumbers?.[0]?.phoneNumber as string | undefined) ?? "",
-  )
+  const [fullName, setFullName] = useState(user?.displayName ?? "")
+  const [email, setEmail] = useState(user?.email ?? "")
+  const [phone, setPhone] = useState("")
   const [saved, setSaved] = useState(false)
 
   function handleSave(e: React.FormEvent) {

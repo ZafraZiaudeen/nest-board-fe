@@ -16,6 +16,7 @@ import { AdminSettings } from "./pages/admin/AdminSettings"
 import { AdminProtectedRoute } from "./components/auth/AdminProtectedRoute"
 import { AdminThemeApplier } from "./components/auth/AdminThemeApplier"
 import { AdminLayout } from "./pages/admin/AdminLayout"
+import { SignUp } from "./pages/auth/SignUp"
 
 const queryClient = new QueryClient()
 
@@ -72,6 +73,7 @@ export function App() {
             </Route>
 
             <Route path="/sign-in/*" element={<SignIn />} />
+            <Route path="/sign-up/*" element={<SignUp />} />
           </Routes>
           <ReactQueryDevtools initialIsOpen={false} />
         </AdminThemeApplier>
