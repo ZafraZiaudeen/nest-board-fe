@@ -1,4 +1,4 @@
-import { useClerk, useUser } from "@clerk/react"
+import { useAuth } from "@/components/auth/AuthProvider"
 import {
   Building2,
   CalendarDays,
@@ -17,28 +17,19 @@ const NAV_ITEMS = [
   { label: "Settings",   to: "/admin/settings",   icon: Settings,        end: false },
 ] as const
 
-function getInitials(firstName?: string | null, lastName?: string | null): string {
-  const f = firstName?.[0] ?? ""
-  const l = lastName?.[0] ?? ""
-  return (f + l).toUpperCase() || "U"
-}
-
-function getDisplayName(
-  firstName?: string | null,
-  lastName?: string | null,
-  username?: string | null,
-): string {
-  if (firstName && lastName) return `${firstName} ${lastName[0]}.`
-  if (firstName) return firstName
-  return username ?? "User"
+function getInitials(displayName?: string | null): string {
+  if (!displayName) return "U"
+  const parts = displayName.trim().split(/\s+/)
+  const first = parts[0]?.[0] ?? ""
+  const last = parts.length > 1 ? (parts[parts.length - 1]?.[0] ?? "") : ""
+  return (first + last).toUpperCase() || "U"
 }
 
 export function AdminSidebar() {
-  const { user } = useUser()
-  const { signOut } = useClerk()
+  const { user, logout } = useAuth()
 
-  const initials = getInitials(user?.firstName, user?.lastName)
-  const displayName = getDisplayName(user?.firstName, user?.lastName, user?.username)
+  const initials = getInitials(user?.displayName)
+  const displayName = user?.displayName ?? "User"
 
   return (
     <aside className="flex h-screen w-[270px] flex-shrink-0 flex-col border-r border-gray-200 bg-white">
@@ -91,7 +82,7 @@ export function AdminSidebar() {
           <span className="text-[11px] text-[#9CA3AF]">Property Owner</span>
         </div>
         <button
-          onClick={() => signOut()}
+          onClick={() => logout()}
           className="shrink-0 rounded p-1 text-[#D1D5DB] transition-colors hover:text-gray-500"
           aria-label="Sign out"
         >

@@ -1,22 +1,19 @@
 import { fetchMyBookings } from "@/api/bookings"
-import { BackendAuthGate } from "@/components/auth/BackendAuthGate"
-import { useUser } from "@clerk/react"
+import { useAuth } from "@/components/auth/AuthProvider"
 import { useQuery } from "@tanstack/react-query"
 // import { FileExclamationPoint } from "lucide-react"
 
 export function Dashboard() {
-  const { user } = useUser()
+  const { user } = useAuth()
 
   return (
     <div className="min-h-screen bg-gray-50 px-6 pt-28">
       <div className="mx-auto max-w-3xl">
         <h1 className="text-3xl font-semibold text-gray-900">
-          Welcome, {user?.firstName || "User"}!
+          Welcome, {user?.displayName || "User"}!
         </h1>
 
-        <BackendAuthGate>
           <MyBookings />
-        </BackendAuthGate>
       </div>
     </div>
   )

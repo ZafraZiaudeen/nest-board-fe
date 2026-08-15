@@ -58,3 +58,11 @@ export async function createBooking(input: CreateBookingInput) {
     body: JSON.stringify(input),
   })
 }
+
+
+export async function confirmBooking(bookingId: string) {
+  return apiFetch<{ url: string }>(`/bookings/${bookingId}/confirm`, {
+    method: "POST",
+    auth: true,
+  })
+}

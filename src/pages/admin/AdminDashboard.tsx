@@ -1,4 +1,4 @@
-import { useUser } from "@clerk/react"
+import { useAuth } from "@/components/auth/AuthProvider"
 import { useQueries } from "@tanstack/react-query"
 import {
   Bell,
@@ -133,13 +133,8 @@ const RECENT_BOOKINGS = [
 ]
 
 export function AdminDashboard() {
-  const { user } = useUser()
-  const displayName =
-    user?.firstName ??
-    user?.fullName ??
-    user?.username ??
-    user?.primaryEmailAddress?.emailAddress ??
-    "there"
+  const { user } = useAuth()
+  const displayName = user?.displayName ?? "there"
 
   const {
     data: properties,
@@ -182,8 +177,8 @@ export function AdminDashboard() {
     return properties.map((property, idx) => {
       const detail = detailQueries[idx]?.data
       if (!detail) return { name: property.title, pct: null as number | null }
-      const totalSeats = detail.rooms.reduce((s, r) => s + r.seatsTotal, 0)
-      const freeSeats = detail.rooms.reduce((s, r) => s + r.seatsFree, 0)
+      const totalSeats = detail.rooms?.reduce((s, r) => s + r.seatsTotal, 0) ?? 0
+      const freeSeats = detail.rooms?.reduce((s, r) => s + r.seatsFree, 0) ?? 0
       const pct =
         totalSeats === 0
           ? 0

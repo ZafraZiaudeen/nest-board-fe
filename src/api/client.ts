@@ -10,6 +10,10 @@ export function setAccessToken(token: string) {
   localStorage.setItem(TOKEN_KEY, token)
 }
 
+export function clearAccessToken() {
+  localStorage.removeItem(TOKEN_KEY)
+}
+
 type ApiOptions = RequestInit & {
   auth?: boolean
 }

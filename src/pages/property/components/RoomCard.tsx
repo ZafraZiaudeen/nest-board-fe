@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import type { RoomType } from "@/types/property"
 import { useMutation, useQueryClient } from "@tanstack/react-query"
-import { createBooking } from "@/api/bookings"
+import { confirmBooking, createBooking } from "@/api/bookings"
 import { useState } from "react"
 
 export function RoomCard({
@@ -18,17 +18,19 @@ export function RoomCard({
   const [message, setMessage] = useState<string | null>(null)
 
   const { mutate: book, isPending } = useMutation({
-    mutationFn: () => {
+    mutationFn: async () => {
       const room = rooms?.find((r) => r.isAvailable)
       if (!room) {
         throw new Error("No available room")
       }
-      return createBooking({
+      const booking = await createBooking({
         roomId: room.id,
         seatNumber: 1,
         startMonth: "2026-08",
         durationMonths: 3,
       })
+      const { url } = await confirmBooking(booking.id)
+      window.location.href = url
     },
     onSuccess: () => {
       setMessage("Booked. Check My Bookings")
