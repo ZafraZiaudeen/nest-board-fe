@@ -6,7 +6,7 @@ import { StatusBadge } from "@/components/ui/StatusBadge"
 import { resumeBookingPayment, cancelBookingRequest } from "@/api/bookings"
 import type { BookingDTO } from "@/types/booking"
 
-const PAYMENT_WINDOW_MS = 3 * 24 * 60 * 60 * 1000 // 3 days, matches backend
+const PAYMENT_WINDOW_MS = 30 * 60 * 1000 // 30 minutes, matches backend BOOKING_EXPIRY_MS
 
 function usePaymentCountdown(createdAt: string): string | null {
   const [now, setNow] = useState(Date.now)
@@ -21,12 +21,9 @@ function usePaymentCountdown(createdAt: string): string | null {
   if (remaining === 0) return null
 
   const total = Math.floor(remaining / 1000)
-  const d = Math.floor(total / 86400)
-  const h = Math.floor((total % 86400) / 3600)
-  const m = Math.floor((total % 3600) / 60)
+  const m = Math.floor(total / 60)
   const s = total % 60
-  if (d > 0) return `${d}d ${h}h ${m}m`
-  return `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`
+  return `${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`
 }
 
 type FilterTab = "ALL" | "CONFIRMED" | "PENDING" | "CANCELLED" | "EXPIRED"
