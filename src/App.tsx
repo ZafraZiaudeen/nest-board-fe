@@ -11,12 +11,17 @@ import { ProtectedRoute } from "./components/auth/ProtectedRoute"
 import { AdminDashboard } from "./pages/admin/AdminDashboard"
 import { AdminProperties } from "./pages/admin/AdminProperties"
 import { AdminPropertyDetail } from "./pages/admin/AdminPropertyDetail"
-// import { AdminBookings } from "./pages/admin/AdminBookings"
+import { AdminBookings } from "./pages/admin/AdminBookings"
 import { AdminSettings } from "./pages/admin/AdminSettings"
 import { AdminProtectedRoute } from "./components/auth/AdminProtectedRoute"
 import { AdminThemeApplier } from "./components/auth/AdminThemeApplier"
 import { AdminLayout } from "./pages/admin/AdminLayout"
 import { SignUp } from "./pages/auth/SignUp"
+import { StripeSuccess } from "./pages/stripe/StripeSuccess"
+import { StripeCancel } from "./pages/stripe/StripeCancel"
+import { RoomTypeDetails } from "./pages/property/RoomTypeDetails"
+import { MyBookings } from "./pages/bookings/MyBookings"
+import { SavedProperties } from "./pages/saved/SavedProperties"
 
 const queryClient = new QueryClient()
 
@@ -41,37 +46,34 @@ export function App() {
       <BrowserRouter>
         <AdminThemeApplier>
           <Routes>
-            {/* Public + user routes — with top Navbar */}
+            {/* ── Public + tenant routes (Navbar layout) ── */}
             <Route element={<AppLayout />}>
               <Route path="/" element={<Home />} />
-              <Route path="/property-details/:id" element={<PropertyDetails />} />
               <Route path="/map" element={<Map />} />
-              <Route
-                path="/dashboard"
-                element={
-                  <ProtectedRoute>
-                    <Dashboard />
-                  </ProtectedRoute>
-                }
-              />
+              <Route path="/property-details/:id" element={<PropertyDetails />} />
+              <Route path="/property-details/:propertyId/room-types/:roomTypeId" element={<RoomTypeDetails />} />
+              <Route path="/stripe/success" element={<StripeSuccess />} />
+              <Route path="/stripe/cancel" element={<StripeCancel />} />
+
+              <Route element={<ProtectedRoute />}>
+                <Route path="/dashboard" element={<Dashboard />} />
+                <Route path="/my-bookings" element={<MyBookings />} />
+                <Route path="/saved" element={<SavedProperties />} />
+              </Route>
             </Route>
 
-            {/* Admin routes — sidebar layout, no top Navbar */}
-            <Route
-              path="/admin"
-              element={
-                <AdminProtectedRoute>
-                  <AdminLayout />
-                </AdminProtectedRoute>
-              }
-            >
-              <Route index element={<AdminDashboard />} />
-              <Route path="properties" element={<AdminProperties />} />
-              <Route path="properties/:id" element={<AdminPropertyDetail />} />
-              {/* <Route path="bookings" element={<AdminBookings />} /> */}
-              <Route path="settings" element={<AdminSettings />} />
+            {/* ── Admin routes (sidebar layout, no Navbar) ── */}
+            <Route element={<AdminProtectedRoute />}>
+              <Route path="/admin" element={<AdminLayout />}>
+                <Route index element={<AdminDashboard />} />
+                <Route path="properties" element={<AdminProperties />} />
+                <Route path="properties/:id" element={<AdminPropertyDetail />} />
+                <Route path="bookings" element={<AdminBookings />} />
+                <Route path="settings" element={<AdminSettings />} />
+              </Route>
             </Route>
 
+            {/* ── Auth ── */}
             <Route path="/sign-in/*" element={<SignIn />} />
             <Route path="/sign-up/*" element={<SignUp />} />
           </Routes>

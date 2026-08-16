@@ -2,46 +2,34 @@ import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import type { RoomType } from "@/types/property"
-import { useMutation, useQueryClient } from "@tanstack/react-query"
-import { confirmBooking, createBooking } from "@/api/bookings"
-import { useState } from "react"
+import { useNavigate } from "react-router"
+import { useAuth } from "@/components/auth/AuthProvider"
+
+type RoomCardProps = RoomType & { propertyId: string }
 
 export function RoomCard({
+  id,
   name,
   price,
   seatsTotal,
   seatsFree,
   hasAC,
-  rooms,
-}: RoomType) {
-  const queryClient = useQueryClient()
-  const [message, setMessage] = useState<string | null>(null)
-
-  const { mutate: book, isPending } = useMutation({
-    mutationFn: async () => {
-      const room = rooms?.find((r) => r.isAvailable)
-      if (!room) {
-        throw new Error("No available room")
-      }
-      const booking = await createBooking({
-        roomId: room.id,
-        seatNumber: 1,
-        startMonth: "2026-08",
-        durationMonths: 3,
-      })
-      const { url } = await confirmBooking(booking.id)
-      window.location.href = url
-    },
-    onSuccess: () => {
-      setMessage("Booked. Check My Bookings")
-      queryClient.invalidateQueries({ queryKey: ["my-bookings"] })
-    },
-    onError: () => setMessage("Could not create booking."),
-  })
+  propertyId,
+}: RoomCardProps) {
+  const navigate = useNavigate()
+  const { isSignedIn } = useAuth()
 
   const fillPercentage = Math.round(
     ((seatsTotal - seatsFree) / seatsTotal) * 100
   )
+
+  function handleBookClick() {
+    if (!isSignedIn) {
+      navigate("/sign-in")
+      return
+    }
+    navigate(`/property-details/${propertyId}/room-types/${id}`)
+  }
 
   return (
     <Card className="gap-0 rounded-2xl p-4 ring-1 ring-foreground/10 transition-all">
@@ -72,12 +60,11 @@ export function RoomCard({
       <Button
         className="mt-4 w-full cursor-pointer rounded-xl font-semibold"
         size="lg"
-        disabled={isPending || seatsFree === 0}
-        onClick={() => book()}
+        disabled={seatsFree === 0}
+        onClick={handleBookClick}
       >
-        {isPending ? "Booking..." : "Book this room"}
+        View Rooms
       </Button>
-      {message && <p className="mt-2 text-xs text-gray-500">{message}</p>}
     </Card>
   )
 }

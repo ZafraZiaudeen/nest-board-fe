@@ -1,5 +1,5 @@
 import { useAuth } from "@/components/auth/AuthProvider"
-import { useQueries } from "@tanstack/react-query"
+import { useQueries, useQuery } from "@tanstack/react-query"
 import {
   Bell,
   Building2,
@@ -12,7 +12,8 @@ import {
 } from "lucide-react"
 import { type ReactNode, useMemo } from "react"
 import { fetchPropertyDetail } from "@/api/properties"
-import { useProperties } from "@/hooks/useProperties"
+import { fetchAdminBookings } from "@/api/bookings"
+import { useAdminProperties } from "@/hooks/useAdminProperties"
 import { cn } from "@/lib/utils"
 
 function formatTodayLong(): string {
@@ -65,21 +66,25 @@ function StatCard({
         >
           {icon}
         </div>
-        <div
-          className={cn(
-            "flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-bold",
-            trendPositive
-              ? "bg-[#F0FDF4] text-[#16A34A]"
-              : "bg-[#FFF1F2] text-[#E11D48]",
-          )}
-        >
-          {trendPositive ? (
-            <TrendingUp className="h-[11px] w-[11px]" aria-hidden />
-          ) : (
-            <TrendingDown className="h-[11px] w-[11px]" aria-hidden />
-          )}
-          {trend}
-        </div>
+        {trend ? (
+          <div
+            className={cn(
+              "flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-bold",
+              trendPositive
+                ? "bg-[#F0FDF4] text-[#16A34A]"
+                : "bg-[#FFF1F2] text-[#E11D48]",
+            )}
+          >
+            {trendPositive ? (
+              <TrendingUp className="h-[11px] w-[11px]" aria-hidden />
+            ) : (
+              <TrendingDown className="h-[11px] w-[11px]" aria-hidden />
+            )}
+            {trend}
+          </div>
+        ) : (
+          <div />
+        )}
       </div>
       <p
         className={cn(
@@ -99,38 +104,15 @@ function StatCard({
   )
 }
 
-const RECENT_BOOKINGS = [
-  {
-    id: "1",
-    name: "Kavindra Perera",
-    detail: "Sunrise CL · Room A-3 · Seat 2",
-    timeAgo: "2 min ago",
-  },
-  {
-    id: "2",
-    name: "Nimesha Silva",
-    detail: "Lotus CL · Room B-1 · Seat 4",
-    timeAgo: "15 min ago",
-  },
-  {
-    id: "3",
-    name: "Dulaj Mendis",
-    detail: "Sunrise CL · Room C-2 · Seat 1",
-    timeAgo: "42 min ago",
-  },
-  {
-    id: "4",
-    name: "Sachini Rajapaksha",
-    detail: "Harbor CL · Room D-5 · Seat 3",
-    timeAgo: "1 hr ago",
-  },
-  {
-    id: "5",
-    name: "Tharindu Bandara",
-    detail: "Maple CL · Room A-4 · Seat 5",
-    timeAgo: "2 hrs ago",
-  },
-]
+function timeAgo(isoString: string): string {
+  const diffMs = Date.now() - new Date(isoString).getTime()
+  const diffMin = Math.floor(diffMs / 60_000)
+  if (diffMin < 1) return "just now"
+  if (diffMin < 60) return `${diffMin} min ago`
+  const diffHr = Math.floor(diffMin / 60)
+  if (diffHr < 24) return `${diffHr} hr ago`
+  return `${Math.floor(diffHr / 24)} days ago`
+}
 
 export function AdminDashboard() {
   const { user } = useAuth()
@@ -140,7 +122,13 @@ export function AdminDashboard() {
     data: properties,
     isLoading: propertiesLoading,
     isError: propertiesError,
-  } = useProperties()
+  } = useAdminProperties()
+
+  // Real bookings — replaces hardcoded RECENT_BOOKINGS and "Active Bookings: 127"
+  const { data: allBookings, isLoading: bookingsLoading } = useQuery({
+    queryKey: ["admin-bookings"],
+    queryFn: fetchAdminBookings,
+  })
 
   const propertyIds = useMemo(
     () => properties?.map((p) => p.id) ?? [],
@@ -162,23 +150,39 @@ export function AdminDashboard() {
     propertyIds.length > 0 &&
     detailQueries.some((q) => q.isPending || q.isFetching)
 
+  // Count individual room instances across all room types across all properties
   const totalRooms =
     propertyIds.length === 0
       ? 0
       : roomsLoading
         ? null
         : detailQueries.reduce(
-            (sum, q) => sum + (q.data?.rooms?.length ?? 0),
+            (sum, q) =>
+              sum +
+              (q.data?.roomTypes?.reduce(
+                (s, rt) => s + (rt.rooms?.length ?? 0),
+                0,
+              ) ?? 0),
             0,
           )
 
+  // Count CONFIRMED bookings as "active"
+  const activeBookingsCount = allBookings?.filter(
+    (b) => b.status === "CONFIRMED",
+  ).length ?? null
+
+  // 5 most recent bookings for the live feed
+  const recentBookings = allBookings?.slice(0, 5) ?? []
+
+  // Occupancy: (totalSeats - seatsFree) / totalSeats per property
+  // seatsFree now comes from the backend with real booking counts subtracted
   const occupancyData = useMemo(() => {
     if (!properties) return []
     return properties.map((property, idx) => {
       const detail = detailQueries[idx]?.data
       if (!detail) return { name: property.title, pct: null as number | null }
-      const totalSeats = detail.rooms?.reduce((s, r) => s + r.seatsTotal, 0) ?? 0
-      const freeSeats = detail.rooms?.reduce((s, r) => s + r.seatsFree, 0) ?? 0
+      const totalSeats = detail.roomTypes?.reduce((s, rt) => s + rt.seatsTotal, 0) ?? 0
+      const freeSeats = detail.roomTypes?.reduce((s, rt) => s + rt.seatsFree, 0) ?? 0
       const pct =
         totalSeats === 0
           ? 0
@@ -259,11 +263,12 @@ export function AdminDashboard() {
               <StatCard
                 icon={<CalendarDays className="h-5 w-5 text-[#0D9488]" />}
                 iconBg="bg-[#F0FDFA]"
-                trend="+12%"
+                trend=""
                 trendPositive
-                value={127}
+                value={activeBookingsCount}
                 label="Active Bookings"
-                timeframe="from last month"
+                timeframe="confirmed leases"
+                loading={bookingsLoading}
               />
               <StatCard
                 icon={<TrendingUp className="h-5 w-5 text-[#D97706]" />}
@@ -277,7 +282,7 @@ export function AdminDashboard() {
               />
             </div>
 
-            {/* Recent Bookings */}
+            {/* Recent Bookings — real data from GET /bookings/vendor */}
             <div className="rounded-[18px] border border-[#F3F4F6] bg-white shadow-[0_1px_4px_rgba(0,0,0,0.05)]">
               <div className="flex items-center gap-2.5 px-[22.8px] pb-2 pt-[22.8px]">
                 <span className="text-base font-bold text-[#111827]">
@@ -290,32 +295,56 @@ export function AdminDashboard() {
                   </span>
                 </div>
               </div>
-              <ul>
-                {RECENT_BOOKINGS.map((booking, idx) => (
-                  <li
-                    key={booking.id}
-                    className={cn(
-                      "flex items-center justify-between px-[22.8px] py-3",
-                      idx > 0 && "border-t border-[#F9FAFB]",
-                    )}
-                  >
-                    <div className="flex items-center gap-2.5">
-                      <span className="h-[9px] w-[9px] shrink-0 rounded-full bg-[#22C55E]" />
-                      <div className="flex flex-col gap-0.5">
-                        <span className="text-[13px] font-bold text-[#111827]">
-                          {booking.name}
-                        </span>
-                        <span className="text-[11px] text-[#9CA3AF]">
-                          {booking.detail}
-                        </span>
+              {bookingsLoading ? (
+                <ul>
+                  {[1, 2, 3].map((i) => (
+                    <li key={i} className="flex items-center gap-2.5 px-[22.8px] py-3 border-t border-[#F9FAFB] first:border-0">
+                      <div className="h-[9px] w-[9px] shrink-0 animate-pulse rounded-full bg-gray-200" />
+                      <div className="flex flex-col gap-1">
+                        <div className="h-3 w-32 animate-pulse rounded bg-gray-100" />
+                        <div className="h-3 w-48 animate-pulse rounded bg-gray-100" />
                       </div>
-                    </div>
-                    <span className="shrink-0 text-[12px] text-[#9CA3AF]">
-                      {booking.timeAgo}
-                    </span>
-                  </li>
-                ))}
-              </ul>
+                    </li>
+                  ))}
+                </ul>
+              ) : recentBookings.length === 0 ? (
+                <p className="px-[22.8px] py-4 text-sm text-[#9CA3AF]">No bookings yet.</p>
+              ) : (
+                <ul>
+                  {recentBookings.map((booking, idx) => {
+                    const dotColor =
+                      booking.status === "CONFIRMED"
+                        ? "bg-[#22C55E]"
+                        : booking.status === "PENDING"
+                          ? "bg-[#F59E0B]"
+                          : "bg-[#9CA3AF]"
+                    return (
+                      <li
+                        key={booking.id}
+                        className={cn(
+                          "flex items-center justify-between px-[22.8px] py-3",
+                          idx > 0 && "border-t border-[#F9FAFB]",
+                        )}
+                      >
+                        <div className="flex items-center gap-2.5">
+                          <span className={cn("h-[9px] w-[9px] shrink-0 rounded-full", dotColor)} />
+                          <div className="flex flex-col gap-0.5">
+                            <span className="text-[13px] font-bold text-[#111827]">
+                              {booking.tenant.displayName}
+                            </span>
+                            <span className="text-[11px] text-[#9CA3AF]">
+                              {booking.property.title} · {booking.room.roomLabel} · Seat {booking.seatNumber}
+                            </span>
+                          </div>
+                        </div>
+                        <span className="shrink-0 text-[12px] text-[#9CA3AF]">
+                          {timeAgo(booking.createdAt)}
+                        </span>
+                      </li>
+                    )
+                  })}
+                </ul>
+              )}
             </div>
 
             {/* Occupancy by Property */}

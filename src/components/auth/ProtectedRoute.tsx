@@ -1,9 +1,9 @@
-import { Navigate } from "react-router"
-import type { ReactNode } from "react"
+import { Navigate, Outlet, useLocation } from "react-router"
 import { useAuth } from "./AuthProvider"
 
-export function ProtectedRoute({ children }: { children: ReactNode }) {
+export function ProtectedRoute() {
   const { isLoading, isSignedIn, user } = useAuth()
+  const location = useLocation()
 
   if (isLoading) {
     return (
@@ -14,14 +14,17 @@ export function ProtectedRoute({ children }: { children: ReactNode }) {
   }
 
   if (!isSignedIn) {
-    return <Navigate to="/sign-in" replace />
+    return (
+      <Navigate
+        to={`/sign-in?redirect=${encodeURIComponent(location.pathname)}`}
+        replace
+      />
+    )
   }
 
-  const role = user?.role as string | undefined
-
-  if (role === "ADMIN") {
+  if (user?.role === "ADMIN") {
     return <Navigate to="/admin" replace />
   }
 
-  return <>{children}</>
+  return <Outlet />
 }

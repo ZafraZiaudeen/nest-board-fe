@@ -6,7 +6,7 @@ export function useCreateBooking() {
   return useMutation({
     mutationFn: createBooking,
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["bookings"] })
+      queryClient.invalidateQueries({ queryKey: ["my-bookings"] })
     },
   })
 }

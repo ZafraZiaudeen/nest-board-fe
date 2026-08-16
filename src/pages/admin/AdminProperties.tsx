@@ -3,12 +3,13 @@ import { Bell, Building2, Edit2, Menu, Plus, Trash2 } from "lucide-react"
 import { useMemo, useState } from "react"
 import { Link } from "react-router"
 import { fetchPropertyDetail } from "@/api/properties"
-import { useProperties } from "@/hooks/useProperties"
+import { useAdminProperties } from "@/hooks/useAdminProperties"
 import { useCreateProperty } from "@/hooks/useCreateProperty"
 import { useUpdateProperty } from "@/hooks/useUpdateProperty"
 import { useDeleteProperty } from "@/hooks/useDeleteProperty"
 import { cn } from "@/lib/utils"
 import type { Property } from "@/types/property"
+import type { CreatePropertyInput } from "@/api/admin-properties"
 import { DeleteConfirm } from "./components/DeleteConfirm"
 import { PropertyForm } from "./components/PropertyForm"
 
@@ -92,6 +93,11 @@ function PropertyCard({
           {property.title}
         </h3>
         <p className="mt-1 text-[13px] text-[#9CA3AF]">{property.location}</p>
+        {property.description && (
+          <p className="mt-1 line-clamp-2 text-[12px] leading-relaxed text-[#9CA3AF]">
+            {property.description}
+          </p>
+        )}
 
         {/* Rooms + occupancy */}
         <div className="mt-3 flex items-center gap-2">
@@ -179,7 +185,7 @@ export function AdminProperties() {
     data: properties,
     isLoading: propertiesLoading,
     isError,
-  } = useProperties()
+  } = useAdminProperties()
 
   const createMutation = useCreateProperty()
   const updateMutation = useUpdateProperty()
@@ -208,9 +214,9 @@ export function AdminProperties() {
 
       if (!detail) return { property, roomCount: null, pct: null, loading }
 
-      const roomCount = detail.rooms.length
-      const totalSeats = detail.rooms.reduce((s, r) => s + r.seatsTotal, 0)
-      const freeSeats = detail.rooms.reduce((s, r) => s + r.seatsFree, 0)
+      const roomCount = detail.roomTypes.length
+      const totalSeats = detail.roomTypes.reduce((s, r) => s + r.seatsTotal, 0)
+      const freeSeats = detail.roomTypes.reduce((s, r) => s + r.seatsFree, 0)
       const pct =
         totalSeats === 0
           ? 0
@@ -225,7 +231,7 @@ export function AdminProperties() {
     setEditTarget(null)
   }
 
-  function handleSave(data: Omit<Property, "id" | "rating">) {
+  function handleSave(data: CreatePropertyInput) {
     if (editTarget) {
       updateMutation.mutate({ id: editTarget.id, data }, { onSuccess: closeForm })
     } else {
@@ -307,7 +313,22 @@ export function AdminProperties() {
       <PropertyForm
         key={editTarget?.id ?? "new"}
         open={formOpen || !!editTarget}
-        initial={editTarget ?? undefined}
+        initial={
+          editTarget
+            ? {
+                title: editTarget.title,
+                description: editTarget.description,
+                address: editTarget.address,
+                city: editTarget.city,
+                type: editTarget.type.toUpperCase() as CreatePropertyInput["type"],
+                rating: editTarget.rating,
+                imageUrl: editTarget.image,
+                amenities: editTarget.amenities ?? [],
+                latitude: editTarget.latitude,
+                longitude: editTarget.longitude,
+              }
+            : undefined
+        }
         onClose={closeForm}
         onSave={handleSave}
         saving={createMutation.isPending || updateMutation.isPending}

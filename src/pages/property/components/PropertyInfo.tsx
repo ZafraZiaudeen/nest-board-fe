@@ -4,6 +4,7 @@ import { Card } from "@/components/ui/card"
 
 type PropertyInfoProps = {
   title: string
+  description: string
   address: string
   amenities: string[]
   seatsAvailable: number
@@ -13,6 +14,7 @@ type PropertyInfoProps = {
 
 export function PropertyInfo({
   title,
+  description,
   address,
   amenities,
   seatsAvailable,
@@ -27,6 +29,10 @@ export function PropertyInfo({
         <MapPin className="size-3.5 shrink-0" />
         <span className="text-sm">{address}</span>
       </div>
+
+      {description && (
+        <p className="mt-3 text-sm leading-relaxed text-gray-500">{description}</p>
+      )}
 
       <div className="mt-4 flex flex-wrap gap-2">
         {amenities.map((amenity) => (

@@ -13,7 +13,7 @@ type AuthContextValue = {
   user: AuthUser | undefined
   isLoading: boolean
   isSignedIn: boolean
-  login: (email: string, password: string) => Promise<void>
+  login: (email: string, password: string) => Promise<AuthUser>
   logout: () => void
   register: (
     email: string,
@@ -38,7 +38,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const { accessToken } = await apiLogin(email, password)
     setAccessToken(accessToken)
     setHasToken(true)
+    const user = await fetchMe()
     await queryClient.invalidateQueries({ queryKey: ["me"] })
+    return user
   }
 
   async function register(

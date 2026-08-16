@@ -1,24 +1,38 @@
 import { useState, type FormEvent } from "react"
-import { useNavigate, NavLink } from "react-router"
+import { useNavigate, useSearchParams, NavLink } from "react-router"
 import { useAuth } from "@/components/auth/AuthProvider"
+import { type AuthUser } from "@/api/auth"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 
 export function SignIn() {
   const { login } = useAuth()
   const navigate = useNavigate()
+  const [searchParams] = useSearchParams()
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
+
+  const googleClientId = import.meta.env.VITE_GOOGLE_CLIENT_ID
+
+  function getRedirectPath(user: AuthUser): string {
+    if (user.role === "ADMIN") return "/admin"
+    return searchParams.get("redirect") ?? "/dashboard"
+  }
+
+  function handleGoogleSuccess(user: AuthUser) {
+    navigate(getRedirectPath(user))
+  }
+
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault()
     setLoading(true)
     setError(null)
     try {
-      await login(email, password)
-      navigate("/dashboard")
+      const user = await login(email, password)
+      navigate(getRedirectPath(user))
     } catch {
       setError("Invalid email or password.")
     } finally {

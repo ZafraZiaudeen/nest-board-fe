@@ -36,6 +36,7 @@ export function PropertyDetails() {
         <div className="relative z-10 -mt-12">
           <PropertyInfo
             title={property.title}
+            description={property.description}
             address={property.address}
             amenities={property.amenities}
             seatsAvailable={property.seatsAvailable}
@@ -45,7 +46,8 @@ export function PropertyDetails() {
         </div>
 
         <div className="mt-5">
- <RoomList rooms={property.roomTypes} />        </div>
+          <RoomList rooms={property.roomTypes} propertyId={property.id} />
+        </div>
       </div>
     </div>
   )

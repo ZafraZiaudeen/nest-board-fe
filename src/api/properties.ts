@@ -4,6 +4,19 @@ import { apiFetch } from "./client"
 export async function fetchProperties(): Promise<Property[]> {
   return (await apiFetch<{ data: Property[] }>("/properties")).data
 }
+
+export async function fetchMyFavourites(): Promise<Property[]> {
+  return apiFetch<Property[]>("/properties/my-favourites", { auth: true })
+}
+
+export async function toggleFavourite(
+  propertyId: string,
+): Promise<{ propertyId: string; isFavorite: boolean }> {
+  return apiFetch<{ propertyId: string; isFavorite: boolean }>(
+    `/properties/${propertyId}/toggle-favorite`,
+    { method: "PATCH", auth: true },
+  )
+}
 export async function fetchPropertyDetail(id: string): Promise<PropertyDetail> {
   return apiFetch<PropertyDetail>(`/properties/${id}`)
 }
