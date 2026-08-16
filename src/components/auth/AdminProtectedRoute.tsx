@@ -1,12 +1,7 @@
 import { useAuth } from "@/components/auth/AuthProvider"
-import { Navigate } from "react-router"
-import type { ReactNode } from "react"
+import { Navigate, Outlet } from "react-router"
 
-type AdminProtectedRouteProps = {
-  children: ReactNode
-}
-
-export function AdminProtectedRoute({ children }: AdminProtectedRouteProps) {
+export function AdminProtectedRoute() {
   const { user, isLoading, isSignedIn } = useAuth()
 
   if (isLoading) {
@@ -25,5 +20,5 @@ export function AdminProtectedRoute({ children }: AdminProtectedRouteProps) {
     return <Navigate to="/dashboard" replace />
   }
 
-  return <>{children}</>
+  return <Outlet />
 }

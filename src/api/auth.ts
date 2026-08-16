@@ -9,9 +9,9 @@ export type AuthUser = {
   bioTag: string | null
 }
 
-type AuthResponse = {
+export type AuthResponse = {
   accessToken: string
-  refreshToken?: string
+  refreshToken: string
 }
 
 export async function login(email: string, password: string) {
@@ -29,6 +29,20 @@ export async function register(
   return apiFetch<AuthResponse>("/auth/register", {
     method: "POST",
     body: JSON.stringify({ email, password, displayName }),
+  })
+}
+
+export async function googleAuth(idToken: string) {
+  return apiFetch<AuthResponse>("/auth/google", {
+    method: "POST",
+    body: JSON.stringify({ idToken }),
+  })
+}
+
+export async function refreshTokens(refreshToken: string) {
+  return apiFetch<AuthResponse>("/auth/refresh", {
+    method: "POST",
+    body: JSON.stringify({ refreshToken }),
   })
 }
 

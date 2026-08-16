@@ -4,8 +4,14 @@ import {
   type AuthUser,
   login as apiLogin,
   register as apiRegister,
+  googleAuth as apiGoogleAuth,
 } from "@/api/auth"
-import { clearAccessToken, getAccessToken, setAccessToken } from "@/api/client"
+import {
+  clearAllTokens,
+  getAccessToken,
+  setAccessToken,
+  setRefreshToken,
+} from "@/api/client"
 import { useQuery, useQueryClient } from "@tanstack/react-query"
 import { createContext, useContext, useState, type ReactNode } from "react"
 
@@ -13,13 +19,14 @@ type AuthContextValue = {
   user: AuthUser | undefined
   isLoading: boolean
   isSignedIn: boolean
-  login: (email: string, password: string) => Promise<void>
+  login: (email: string, password: string) => Promise<AuthUser>
   logout: () => void
   register: (
     email: string,
     password: string,
     displayName: string
-  ) => Promise<void>
+  ) => Promise<AuthUser>
+  loginWithGoogle: (idToken: string) => Promise<AuthUser>
 }
 
 const AuthContext = createContext<AuthContextValue | null>(null)
@@ -34,26 +41,43 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     retry: false,
   })
 
-  async function login(email: string, password: string) {
-    const { accessToken } = await apiLogin(email, password)
+  async function storeTokensAndLoadUser(
+    accessToken: string,
+    refreshToken: string
+  ): Promise<AuthUser> {
     setAccessToken(accessToken)
+    setRefreshToken(refreshToken)
     setHasToken(true)
-    await queryClient.invalidateQueries({ queryKey: ["me"] })
+    const me = await fetchMe()
+    queryClient.setQueryData(["me"], me)
+    return me
+  }
+
+  async function login(email: string, password: string): Promise<AuthUser> {
+    const { accessToken, refreshToken } = await apiLogin(email, password)
+    return storeTokensAndLoadUser(accessToken, refreshToken)
   }
 
   async function register(
     email: string,
     password: string,
     displayName: string
-  ) {
-    const { accessToken } = await apiRegister(email, password, displayName)
-    setAccessToken(accessToken)
-    setHasToken(true)
-    await queryClient.invalidateQueries({ queryKey: ["me"] })
+  ): Promise<AuthUser> {
+    const { accessToken, refreshToken } = await apiRegister(
+      email,
+      password,
+      displayName
+    )
+    return storeTokensAndLoadUser(accessToken, refreshToken)
   }
 
-  async function logout() {
-    clearAccessToken()
+  async function loginWithGoogle(idToken: string): Promise<AuthUser> {
+    const { accessToken, refreshToken } = await apiGoogleAuth(idToken)
+    return storeTokensAndLoadUser(accessToken, refreshToken)
+  }
+
+  function logout() {
+    clearAllTokens()
     setHasToken(false)
     queryClient.removeQueries({ queryKey: ["me"] })
   }
@@ -67,6 +91,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         login,
         logout,
         register,
+        loginWithGoogle,
       }}
     >
       {children}

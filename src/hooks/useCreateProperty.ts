@@ -1,12 +1,12 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query"
-import { createProperty } from "@/api/properties"
+import { createProperty } from "@/api/admin-properties"
 
 export function useCreateProperty() {
   const queryClient = useQueryClient()
   return useMutation({
     mutationFn: createProperty,
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["properties"] })
+      queryClient.invalidateQueries({ queryKey: ["admin-properties"] })
     },
   })
 }

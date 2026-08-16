@@ -51,6 +51,21 @@ export function Navbar({ links }: NavbarProps) {
                 {label}
               </NavLink>
             ))}
+            {isSignedIn && (
+              <NavLink
+                to="/my-bookings"
+                className={({ isActive }) =>
+                  [
+                    "text-md rounded-full px-4 py-1.5 transition-all duration-200",
+                    isActive
+                      ? "bg-primary text-white"
+                      : "text-white/70 hover:bg-white/10 hover:text-white",
+                  ].join(" ")
+                }
+              >
+                My Bookings
+              </NavLink>
+            )}
           </div>
         )}
 
@@ -58,9 +73,15 @@ export function Navbar({ links }: NavbarProps) {
         <div className="flex items-center gap-3.5">
           {!isAdmin && (
             <>
-              <button className="rounded-full p-2 transition-colors hover:bg-white/10">
-                <Heart className="h-5 w-5 text-white/70 hover:text-white" />
-              </button>
+              <NavLink
+                to="/saved"
+                className={({ isActive }) =>
+                  `rounded-full p-2 transition-colors hover:bg-white/10 ${isActive ? "text-white" : "text-white/70"}`
+                }
+                aria-label="Saved properties"
+              >
+                <Heart className="h-5 w-5" />
+              </NavLink>
 
               <button className="rounded-full p-2 transition-colors hover:bg-white/10">
                 <MessageCircle className="h-5 w-5 text-white/70 hover:text-white" />

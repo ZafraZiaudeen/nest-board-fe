@@ -1,12 +1,12 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query"
-import { deleteProperty } from "@/api/properties"
+import { deleteProperty } from "@/api/admin-properties"
 
 export function useDeleteProperty() {
   const queryClient = useQueryClient()
   return useMutation({
     mutationFn: deleteProperty,
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["properties"] })
+      queryClient.invalidateQueries({ queryKey: ["admin-properties"] })
     },
   })
 }

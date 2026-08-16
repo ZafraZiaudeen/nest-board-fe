@@ -1,16 +1,18 @@
 import type { RoomType, Property } from "@/types/property"
 import { apiFetch } from "./client"
 
-type CreatePropertyInput = {
+export type CreatePropertyInput = {
   title: string
   description: string
   address: string
   city: string
   type: "HOUSE" | "VILLA" | "APARTMENT" | "HOTEL"
   rating: number
-  latitude: number
-  longitude: number
-  imageUrl: string
+  amenities?: string[]
+  latitude?: number
+  longitude?: number
+  imageUrl?: string
+  minStay?: string
 }
 
 export async function fetchProperties() {
@@ -32,11 +34,20 @@ export async function deleteProperty(id: string) {
   })
 }
 
+export async function updateProperty(id: string, input: Partial<CreatePropertyInput>) {
+  return apiFetch<Property>(`/properties/${id}`, {
+    method: "PATCH",
+    auth: true,
+    body: JSON.stringify(input),
+  })
+}
+
 type CreateRoomTypeInput = {
   name: string
   pricePerMonth: number
   seatCapacity: number
   hasAC: boolean
+  amenities?: string[]
 }
 
 export async function createRoomType(
@@ -88,4 +99,24 @@ export async function deleteRoom(
       auth: true,
     }
   )
+}
+
+type UpdateRoomTypeInput = Partial<{
+  name: string
+  pricePerMonth: number
+  seatCapacity: number
+  hasAC: boolean
+  amenities: string[]
+}>
+
+export async function updateRoomType(
+  propertyId: string,
+  roomTypeId: string,
+  input: UpdateRoomTypeInput
+) {
+  return apiFetch<RoomType>(`/properties/${propertyId}/room-types/${roomTypeId}`, {
+    method: "PATCH",
+    auth: true,
+    body: JSON.stringify(input),
+  })
 }
