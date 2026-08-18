@@ -20,10 +20,13 @@ The **NestBoard** web frontend is a property rental and co-living platform built
 - **Admin Settings**: Update the admin display name.
 - **Theme Support**: Light and dark mode via a theme provider that respects system preference.
 
+## Word document with all the links 
+https://docs.google.com/document/d/12UAiaQ-1PiDfTW6s2RhdzWhO8nlJ0XD8jw2iBSHSe6E/edit?usp=sharing
+
 ## Repositories
 
-- **Backend API**: [NestBoard Backend Repository](#)
-- **Mobile App**: [NestBoard Mobile Repository](#)
+- **Backend API**: https://github.com/ZafraZiaudeen/nestboard-be
+- **Mobile App**:https://github.com/ZafraZiaudeen/nest-app
 
 ## Tech Stack
 
