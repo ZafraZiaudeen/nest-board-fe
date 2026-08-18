@@ -1,6 +1,4 @@
-import { useState } from "react"
 import { HeroSection } from "./components/HeroSection"
-import { properties } from "@/data/properties"
 import { PropertyList } from "./components/PropertyList"
 import { SearchFilters } from "./components/SearchFilters"
 import type { Property } from "@/types/property"

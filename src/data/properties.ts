@@ -1,6 +1,11 @@
 import type { Property } from "@/types/property"
 
-export const properties: Property[] = [
+type PropertyPreview = Pick<
+  Property,
+  "id" | "title" | "location" | "type" | "price" | "rating" | "image"
+>
+
+export const properties: PropertyPreview[] = [
   {
     id: "prop-001",
     title: "Sunset Apartment",

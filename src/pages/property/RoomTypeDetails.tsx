@@ -11,12 +11,6 @@ function getCurrentMonth(): string {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`
 }
 
-function addMonths(yyyymm: string, n: number): string {
-  const [y, m] = yyyymm.split("-").map(Number)
-  const total = m - 1 + n
-  return `${y + Math.floor(total / 12)}-${String((total % 12) + 1).padStart(2, "0")}`
-}
-
 function monthDiff(from: string, to: string): number {
   const [fy, fm] = from.split("-").map(Number)
   const [ty, tm] = to.split("-").map(Number)
