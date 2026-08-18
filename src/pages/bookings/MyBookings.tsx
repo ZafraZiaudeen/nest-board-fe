@@ -38,8 +38,8 @@ const TABS: { key: FilterTab; label: string }[] = [
 
 function formatLeaseDate(yyyyMmDd: string): string {
   const [year, month] = yyyyMmDd.split("-")
-  const date = new Date(Number(year), Number(month) - 1, 1)
-  return date.toLocaleDateString("en-US", { month: "short", year: "numeric" })
+  return new Date(Number(year), Number(month) - 1, 1)
+    .toLocaleDateString("en-US", { month: "short", year: "numeric" })
 }
 
 function BookingCard({ b }: { b: BookingDTO }) {

@@ -17,8 +17,16 @@ export async function toggleFavourite(
     { method: "PATCH", auth: true },
   )
 }
-export async function fetchPropertyDetail(id: string): Promise<PropertyDetail> {
-  return apiFetch<PropertyDetail>(`/properties/${id}`)
+export type LeaseWindow = { startMonth: string; durationMonths: number }
+
+export async function fetchPropertyDetail(
+  id: string,
+  window?: LeaseWindow,
+): Promise<PropertyDetail> {
+  const params = window
+    ? `?startMonth=${encodeURIComponent(window.startMonth)}&durationMonths=${window.durationMonths}`
+    : ""
+  return apiFetch<PropertyDetail>(`/properties/${id}${params}`)
 }
 
 export async function createProperty(

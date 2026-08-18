@@ -171,6 +171,17 @@ export function AdminDashboard() {
     (b) => b.status === "CONFIRMED",
   ).length ?? null
 
+  // Monthly recurring revenue: sum of pricePerMonth for every CONFIRMED booking
+  const monthlyRevenue = allBookings
+    ? allBookings
+        .filter((b) => b.status === "CONFIRMED")
+        .reduce((sum, b) => sum + parseFloat(b.roomType.price), 0)
+    : null
+  const formattedRevenue =
+    monthlyRevenue !== null
+      ? `LKR ${monthlyRevenue.toLocaleString("en-LK")}`
+      : null
+
   // 5 most recent bookings for the live feed
   const recentBookings = allBookings?.slice(0, 5) ?? []
 
@@ -273,12 +284,13 @@ export function AdminDashboard() {
               <StatCard
                 icon={<TrendingUp className="h-5 w-5 text-[#D97706]" />}
                 iconBg="bg-[#FFFBEB]"
-                trend="-3%"
-                trendPositive={false}
-                value="LKR 1,920,000"
+                trend=""
+                trendPositive
+                value={formattedRevenue}
                 label="Monthly Revenue"
-                timeframe="from last month"
-                valueClassName="text-[28px] leading-none"
+                timeframe="active confirmed leases"
+                loading={bookingsLoading}
+                valueClassName="text-[26px] leading-none"
               />
             </div>
 

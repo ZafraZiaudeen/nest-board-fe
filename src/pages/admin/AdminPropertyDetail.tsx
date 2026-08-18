@@ -21,6 +21,7 @@ import { useDeleteRoomType } from "@/hooks/useDeleteRoomType"
 import { useUpdateRoomType } from "@/hooks/useUpdateRoomType"
 import { useCreateRoom } from "@/hooks/useCreateRoom"
 import { useDeleteRoom } from "@/hooks/useDeleteRoom"
+import { useUpdateRoom } from "@/hooks/useUpdateRoom"
 import { cn } from "@/lib/utils"
 import type { Property, RoomType } from "@/types/property"
 import type { CreatePropertyInput } from "@/api/admin-properties"
@@ -61,6 +62,7 @@ export function AdminPropertyDetail() {
   // Room mutations
   const createRoomMutation = useCreateRoom(id ?? "")
   const deleteRoomMutation = useDeleteRoom(id ?? "")
+  const updateRoomMutation = useUpdateRoom(id ?? "")
 
   // Property form state
   const [editOpen, setEditOpen] = useState(false)
@@ -79,6 +81,12 @@ export function AdminPropertyDetail() {
     roomId: string
     roomLabel: string
   } | null>(null)
+  const [editRoomTarget, setEditRoomTarget] = useState<{
+    roomTypeId: string
+    roomId: string
+    roomLabel: string
+  } | null>(null)
+  const [editRoomLabel, setEditRoomLabel] = useState("")
 
   function handleSaveProperty(data: CreatePropertyInput) {
     if (!id) return
@@ -133,6 +141,19 @@ export function AdminPropertyDetail() {
     deleteRoomMutation.mutate(
       { roomTypeId: deleteRoomTarget.roomTypeId, roomId: deleteRoomTarget.roomId },
       { onSuccess: () => setDeleteRoomTarget(null) },
+    )
+  }
+
+  function handleEditRoomOpen(roomTypeId: string, roomId: string, roomLabel: string) {
+    setEditRoomTarget({ roomTypeId, roomId, roomLabel })
+    setEditRoomLabel(roomLabel)
+  }
+
+  function handleEditRoomSave() {
+    if (!editRoomTarget || !editRoomLabel.trim()) return
+    updateRoomMutation.mutate(
+      { roomTypeId: editRoomTarget.roomTypeId, roomId: editRoomTarget.roomId, roomLabel: editRoomLabel.trim() },
+      { onSuccess: () => setEditRoomTarget(null) },
     )
   }
 
@@ -399,7 +420,35 @@ export function AdminPropertyDetail() {
                               </p>
                             ) : (
                               <div className="mb-3 flex flex-wrap gap-2">
-                                {rooms.map((room) => (
+                                {rooms.map((room) =>
+                                  editRoomTarget?.roomId === room.id ? (
+                                    <div key={room.id} className="flex items-center gap-1.5">
+                                      <input
+                                        autoFocus
+                                        type="text"
+                                        value={editRoomLabel}
+                                        onChange={(e) => setEditRoomLabel(e.target.value)}
+                                        onKeyDown={(e) => {
+                                          if (e.key === "Enter") handleEditRoomSave()
+                                          if (e.key === "Escape") setEditRoomTarget(null)
+                                        }}
+                                        className="w-32 rounded-[8px] border border-[#2563EB] px-2.5 py-1 text-[13px] text-[#111827] outline-none focus:ring-2 focus:ring-[#DBEAFE]"
+                                      />
+                                      <button
+                                        onClick={handleEditRoomSave}
+                                        disabled={!editRoomLabel.trim() || updateRoomMutation.isPending}
+                                        className="rounded-[8px] bg-[#2563EB] px-2.5 py-1 text-[12px] font-semibold text-white disabled:opacity-50"
+                                      >
+                                        Save
+                                      </button>
+                                      <button
+                                        onClick={() => setEditRoomTarget(null)}
+                                        className="text-[12px] text-[#9CA3AF] hover:text-[#374151]"
+                                      >
+                                        Cancel
+                                      </button>
+                                    </div>
+                                  ) : (
                                   <div
                                     key={room.id}
                                     className="flex items-center gap-1.5 rounded-[8px] border border-[#E5E7EB] bg-white px-3 py-1.5"
@@ -407,6 +456,13 @@ export function AdminPropertyDetail() {
                                     <span className="text-[13px] font-medium text-[#374151]">
                                       {room.roomLabel}
                                     </span>
+                                    <button
+                                      onClick={() => handleEditRoomOpen(rt.id, room.id, room.roomLabel)}
+                                      className="rounded p-0.5 text-[#9CA3AF] transition-colors hover:text-[#2563EB]"
+                                      aria-label={`Edit room ${room.roomLabel}`}
+                                    >
+                                      <Pencil className="h-3.5 w-3.5" />
+                                    </button>
                                     <button
                                       onClick={() =>
                                         setDeleteRoomTarget({
@@ -421,7 +477,8 @@ export function AdminPropertyDetail() {
                                       <Trash2 className="h-3.5 w-3.5" />
                                     </button>
                                   </div>
-                                ))}
+                                  )
+                                )}
                               </div>
                             )}
 

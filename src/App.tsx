@@ -1,5 +1,4 @@
-import { BrowserRouter, Outlet, Route, Routes } from "react-router"
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
+import { BrowserRouter, Navigate, Outlet, Route, Routes } from "react-router"
 import { Home } from "./pages/home/Home"
 import { PropertyDetails } from "./pages/property/PropertyDetails"
 import { Map } from "./pages/map/Map"
@@ -22,8 +21,7 @@ import { StripeCancel } from "./pages/stripe/StripeCancel"
 import { RoomTypeDetails } from "./pages/property/RoomTypeDetails"
 import { MyBookings } from "./pages/bookings/MyBookings"
 import { SavedProperties } from "./pages/saved/SavedProperties"
-
-const queryClient = new QueryClient()
+import { useAuth } from "./components/auth/AuthProvider"
 
 const navLinks: NavbarLink[] = [
   { label: "Explore", to: "/" },
@@ -40,47 +38,52 @@ export function AppLayout() {
   )
 }
 
+function HomeOrAdminRedirect() {
+  const { user, isLoading } = useAuth()
+  if (isLoading) return null
+  if (user?.role === "ADMIN") return <Navigate to="/admin" replace />
+  return <Home />
+}
+
 export function App() {
   return (
-    <QueryClientProvider client={queryClient}>
-      <BrowserRouter>
-        <AdminThemeApplier>
-          <Routes>
-            {/* ── Public + tenant routes (Navbar layout) ── */}
-            <Route element={<AppLayout />}>
-              <Route path="/" element={<Home />} />
-              <Route path="/map" element={<Map />} />
-              <Route path="/property-details/:id" element={<PropertyDetails />} />
-              <Route path="/property-details/:propertyId/room-types/:roomTypeId" element={<RoomTypeDetails />} />
-              <Route path="/stripe/success" element={<StripeSuccess />} />
-              <Route path="/stripe/cancel" element={<StripeCancel />} />
+    <BrowserRouter>
+      <AdminThemeApplier>
+        <Routes>
+          {/* ── Public + tenant routes (Navbar layout) ── */}
+          <Route element={<AppLayout />}>
+            <Route path="/" element={<HomeOrAdminRedirect />} />
+            <Route path="/map" element={<Map />} />
+            <Route path="/property-details/:id" element={<PropertyDetails />} />
+            <Route path="/property-details/:propertyId/room-types/:roomTypeId" element={<RoomTypeDetails />} />
+            <Route path="/stripe/success" element={<StripeSuccess />} />
+            <Route path="/stripe/cancel" element={<StripeCancel />} />
 
-              <Route element={<ProtectedRoute />}>
-                <Route path="/dashboard" element={<Dashboard />} />
-                <Route path="/my-bookings" element={<MyBookings />} />
-                <Route path="/saved" element={<SavedProperties />} />
-              </Route>
+            <Route element={<ProtectedRoute />}>
+              <Route path="/dashboard" element={<Dashboard />} />
+              <Route path="/my-bookings" element={<MyBookings />} />
+              <Route path="/saved" element={<SavedProperties />} />
             </Route>
+          </Route>
 
-            {/* ── Admin routes (sidebar layout, no Navbar) ── */}
-            <Route element={<AdminProtectedRoute />}>
-              <Route path="/admin" element={<AdminLayout />}>
-                <Route index element={<AdminDashboard />} />
-                <Route path="properties" element={<AdminProperties />} />
-                <Route path="properties/:id" element={<AdminPropertyDetail />} />
-                <Route path="bookings" element={<AdminBookings />} />
-                <Route path="settings" element={<AdminSettings />} />
-              </Route>
+          {/* ── Admin routes (sidebar layout, no Navbar) ── */}
+          <Route element={<AdminProtectedRoute />}>
+            <Route path="/admin" element={<AdminLayout />}>
+              <Route index element={<AdminDashboard />} />
+              <Route path="properties" element={<AdminProperties />} />
+              <Route path="properties/:id" element={<AdminPropertyDetail />} />
+              <Route path="bookings" element={<AdminBookings />} />
+              <Route path="settings" element={<AdminSettings />} />
             </Route>
+          </Route>
 
-            {/* ── Auth ── */}
-            <Route path="/sign-in/*" element={<SignIn />} />
-            <Route path="/sign-up/*" element={<SignUp />} />
-          </Routes>
-          <ReactQueryDevtools initialIsOpen={false} />
-        </AdminThemeApplier>
-      </BrowserRouter>
-    </QueryClientProvider>
+          {/* ── Auth ── */}
+          <Route path="/sign-in/*" element={<SignIn />} />
+          <Route path="/sign-up/*" element={<SignUp />} />
+        </Routes>
+        <ReactQueryDevtools initialIsOpen={false} />
+      </AdminThemeApplier>
+    </BrowserRouter>
   )
 }
 

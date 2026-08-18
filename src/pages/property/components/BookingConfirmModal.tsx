@@ -3,6 +3,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query"
 import { Button } from "@/components/ui/button"
 import { createBooking, confirmBooking } from "@/api/bookings"
 import type { Room, RoomType, PropertyDetail } from "@/types/property"
+import type { LeaseWindow } from "@/api/properties"
 
 type BookingConfirmModalProps = {
   open: boolean
@@ -12,6 +13,7 @@ type BookingConfirmModalProps = {
   property: PropertyDetail
   propertyId: string
   seatNumber: number
+  leaseWindow?: LeaseWindow
 }
 
 function getCurrentMonth(): string {
@@ -51,22 +53,27 @@ export function BookingConfirmModal({
   property,
   propertyId,
   seatNumber,
+  leaseWindow,
 }: BookingConfirmModalProps) {
   const queryClient = useQueryClient()
   const minStay = parseMinStay(property.minStay)
-  const [startMonth, setStartMonth] = useState(getCurrentMonth())
-  const [endMonth, setEndMonth] = useState(addMonths(getCurrentMonth(), minStay))
+  const initialStart = leaseWindow?.startMonth ?? getCurrentMonth()
+  const initialDur = Math.max(minStay, leaseWindow?.durationMonths ?? minStay)
+  const [startMonth, setStartMonth] = useState(initialStart)
+  // endMonth is the INCLUSIVE last month. For initialDur months starting at initialStart,
+  // the last covered month is initialStart + (initialDur - 1).
+  const [endMonth, setEndMonth] = useState(addMonths(initialStart, initialDur - 1))
   const [error, setError] = useState<string | null>(null)
 
-  const durationMonths = Math.max(minStay, monthDiff(startMonth, endMonth))
+  // durationMonths = diff + 1 (inclusive): "From Aug, To Oct" = 3 months
+  const durationMonths = Math.max(minStay, monthDiff(startMonth, endMonth) + 1)
   const priceNum = Number(roomType.price.replace(/,/g, "")) || 0
   const total = priceNum * durationMonths
 
   function handleStartMonthChange(value: string) {
     setStartMonth(value)
-    const minEnd = addMonths(value, minStay)
-    if (monthDiff(value, endMonth) < minStay) {
-      setEndMonth(minEnd)
+    if (monthDiff(value, endMonth) + 1 < minStay) {
+      setEndMonth(addMonths(value, minStay - 1))
     }
   }
 
@@ -167,7 +174,7 @@ export function BookingConfirmModal({
             <input
               type="month"
               value={endMonth}
-              min={addMonths(startMonth, minStay)}
+              min={addMonths(startMonth, minStay - 1)}
               onChange={(e) => setEndMonth(e.target.value)}
               className="w-full rounded-xl border border-gray-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
             />

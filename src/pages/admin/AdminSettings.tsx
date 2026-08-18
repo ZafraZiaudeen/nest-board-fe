@@ -1,19 +1,48 @@
+import { updateProfile } from "@/api/auth"
 import { useAuth } from "@/components/auth/AuthProvider"
+import { useQueryClient } from "@tanstack/react-query"
 import { Bell, Menu, Plus, User } from "lucide-react"
-import { useState } from "react"
+import { useEffect, useRef, useState } from "react"
 
 export function AdminSettings() {
   const { user } = useAuth()
+  const queryClient = useQueryClient()
 
   const [fullName, setFullName] = useState(user?.displayName ?? "")
-  const [email, setEmail] = useState(user?.email ?? "")
-  const [phone, setPhone] = useState("")
-  const [saved, setSaved] = useState(false)
+  const initialized = useRef(false)
 
-  function handleSave(e: React.FormEvent) {
+  // Sync once when user data arrives (handles cache-miss on first mount)
+  useEffect(() => {
+    if (!initialized.current && user?.displayName) {
+      setFullName(user.displayName)
+      initialized.current = true
+    }
+  }, [user?.displayName])
+
+  const [saved, setSaved] = useState(false)
+  const [isSubmitting, setIsSubmitting] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+
+  async function handleSave(e: React.FormEvent) {
     e.preventDefault()
-    setSaved(true)
-    setTimeout(() => setSaved(false), 2500)
+    if (!fullName.trim() || fullName.trim().length < 2) {
+      setError("Name must be at least 2 characters")
+      return
+    }
+    setError(null)
+    setIsSubmitting(true)
+    try {
+      const updated = await updateProfile({ displayName: fullName.trim() })
+      // Set form to server-confirmed value, then let query refetch in background
+      setFullName(updated.displayName)
+      queryClient.setQueryData(["me"], updated)
+      setSaved(true)
+      setTimeout(() => setSaved(false), 2500)
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : "Failed to save. Please try again.")
+    } finally {
+      setIsSubmitting(false)
+    }
   }
 
   return (
@@ -87,33 +116,24 @@ export function AdminSettings() {
                 </label>
                 <input
                   type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  placeholder="Enter your email address"
-                  className="w-full rounded-[10px] border border-[#E5E7EB] px-4 py-3 text-[14px] text-[#111827] outline-none placeholder:text-[#9CA3AF] focus:border-[#2563EB] focus:ring-2 focus:ring-[#DBEAFE]"
+                  value={user?.email ?? ""}
+                  readOnly
+                  className="w-full rounded-[10px] border border-[#E5E7EB] bg-[#F9FAFB] px-4 py-3 text-[14px] text-[#6B7280] outline-none cursor-not-allowed"
                 />
-              </div>
-
-              <div>
-                <label className="mb-1.5 block text-[13px] font-semibold text-[#374151]">
-                  Phone Number
-                </label>
-                <input
-                  type="tel"
-                  value={phone}
-                  onChange={(e) => setPhone(e.target.value)}
-                  placeholder="+94 77 123 4567"
-                  className="w-full rounded-[10px] border border-[#E5E7EB] px-4 py-3 text-[14px] text-[#111827] outline-none placeholder:text-[#9CA3AF] focus:border-[#2563EB] focus:ring-2 focus:ring-[#DBEAFE]"
-                />
+                <p className="mt-1 text-[12px] text-[#9CA3AF]">Email cannot be changed</p>
               </div>
 
               <div className="pt-2">
                 <button
                   type="submit"
-                  className="rounded-full bg-[#2563EB] px-8 py-2.5 text-[14px] font-bold text-white transition-colors hover:bg-blue-700"
+                  disabled={isSubmitting}
+                  className="rounded-full bg-[#2563EB] px-8 py-2.5 text-[14px] font-bold text-white transition-colors hover:bg-blue-700 disabled:opacity-60 disabled:cursor-not-allowed"
                 >
-                  {saved ? "Saved!" : "Save Changes"}
+                  {saved ? "Saved!" : isSubmitting ? "Saving…" : "Save Changes"}
                 </button>
+                {error && (
+                  <p className="mt-2 text-[13px] text-red-500">{error}</p>
+                )}
               </div>
             </form>
           </div>

@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button"
 import { BookingConfirmModal } from "./BookingConfirmModal"
 import { useAuth } from "@/components/auth/AuthProvider"
 import type { Room, RoomType, PropertyDetail } from "@/types/property"
+import type { LeaseWindow } from "@/api/properties"
 
 type Selection = { roomId: string; seatNumber: number }
 
@@ -14,6 +15,7 @@ type RoomDetailCardProps = {
   propertyId: string
   activeSelection: Selection | null
   onSeatSelect: (s: Selection | null) => void
+  leaseWindow?: LeaseWindow
 }
 
 export function RoomDetailCard({
@@ -23,6 +25,7 @@ export function RoomDetailCard({
   propertyId,
   activeSelection,
   onSeatSelect,
+  leaseWindow,
 }: RoomDetailCardProps) {
   const { user } = useAuth()
   const navigate = useNavigate()
@@ -171,6 +174,7 @@ export function RoomDetailCard({
           property={property}
           propertyId={propertyId}
           seatNumber={selectedSeat}
+          leaseWindow={leaseWindow}
         />
       )}
     </>

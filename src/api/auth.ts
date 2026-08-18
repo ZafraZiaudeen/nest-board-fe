@@ -49,3 +49,14 @@ export async function refreshTokens(refreshToken: string) {
 export async function fetchMe() {
   return apiFetch<AuthUser>("/auth/me", { auth: true })
 }
+
+export async function updateProfile(data: {
+  displayName?: string
+  avatarUrl?: string
+}) {
+  return apiFetch<AuthUser>("/auth/me", {
+    method: "PATCH",
+    body: JSON.stringify(data),
+    auth: true,
+  })
+}

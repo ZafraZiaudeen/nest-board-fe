@@ -1,5 +1,24 @@
 import type { RoomType, Property } from "@/types/property"
-import { apiFetch } from "./client"
+import { apiFetch, getAccessToken } from "./client"
+import { API_URL } from "./config"
+
+export async function uploadCoverImage(file: File): Promise<string> {
+  const form = new FormData()
+  form.append("image", file)
+  const token = getAccessToken()
+  const res = await fetch(`${API_URL}/uploads/cover-image`, {
+    method: "POST",
+    headers: token ? { Authorization: `Bearer ${token}` } : {},
+    body: form,
+  })
+  if (!res.ok) {
+    let msg = `Upload failed: ${res.status}`
+    try { const b = await res.json(); if (b?.message) msg = b.message } catch {}
+    throw new Error(msg)
+  }
+  const { url } = await res.json()
+  return url as string
+}
 
 export type CreatePropertyInput = {
   title: string
@@ -97,6 +116,22 @@ export async function deleteRoom(
     {
       method: "DELETE",
       auth: true,
+    }
+  )
+}
+
+export async function updateRoom(
+  propertyId: string,
+  roomTypeId: string,
+  roomId: string,
+  input: { roomLabel: string }
+) {
+  return apiFetch<{ id: string; roomLabel: string; roomTypeId: string }>(
+    `/properties/${propertyId}/room-types/${roomTypeId}/rooms/${roomId}`,
+    {
+      method: "PATCH",
+      auth: true,
+      body: JSON.stringify(input),
     }
   )
 }

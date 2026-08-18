@@ -1,6 +1,7 @@
-import { X } from "lucide-react"
-import { useEffect, useState } from "react"
+import { Upload, X } from "lucide-react"
+import { useEffect, useRef, useState } from "react"
 import type { CreatePropertyInput } from "@/api/admin-properties"
+import { uploadCoverImage } from "@/api/admin-properties"
 
 const PROPERTY_AMENITIES = [
   "WiFi",
@@ -56,6 +57,9 @@ export function PropertyForm({
     String(Math.max(1, parseInt(initial?.minStay ?? "1") || 1))
   )
   const [errors, setErrors] = useState<Record<string, string>>({})
+  const [uploading, setUploading] = useState(false)
+  const [uploadError, setUploadError] = useState<string | null>(null)
+  const fileInputRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
     setTitle(initial?.title ?? "")
@@ -70,6 +74,7 @@ export function PropertyForm({
     setAmenities(initial?.amenities ?? [])
     setMinStayMonths(String(Math.max(1, parseInt(initial?.minStay ?? "1") || 1)))
     setErrors({})
+    setUploadError(null)
   }, [initial?.title, open])
 
   if (!open) return null
@@ -87,6 +92,22 @@ export function PropertyForm({
     if (rating === "" || isNaN(r) || r < 0 || r > 5)
       errs.rating = "Rating must be between 0 and 5."
     return errs
+  }
+
+  async function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0]
+    if (!file) return
+    setUploading(true)
+    setUploadError(null)
+    try {
+      const url = await uploadCoverImage(file)
+      setImageUrl(url)
+    } catch (err) {
+      setUploadError(err instanceof Error ? err.message : "Upload failed")
+    } finally {
+      setUploading(false)
+      if (fileInputRef.current) fileInputRef.current.value = ""
+    }
   }
 
   function handleSave() {
@@ -277,14 +298,38 @@ export function PropertyForm({
             </div>
           </div>
           <div>
-            <label className={LABEL}>Image URL</label>
+            <label className={LABEL}>Cover Image</label>
+            {imageUrl && (
+              <div className="relative mb-2 overflow-hidden rounded-[10px] border border-[#E5E7EB]">
+                <img src={imageUrl} alt="Cover preview" className="h-36 w-full object-cover" />
+                <button
+                  type="button"
+                  onClick={() => setImageUrl("")}
+                  className="absolute right-2 top-2 flex h-6 w-6 items-center justify-center rounded-full bg-black/50 text-white hover:bg-black/70"
+                  aria-label="Remove image"
+                >
+                  <X className="h-3.5 w-3.5" />
+                </button>
+              </div>
+            )}
             <input
-              type="url"
-              value={imageUrl}
-              onChange={(e) => setImageUrl(e.target.value)}
-              placeholder="https://..."
-              className={FIELD}
+              ref={fileInputRef}
+              type="file"
+              accept="image/jpeg,image/png,image/webp"
+              onChange={handleFileChange}
+              className="hidden"
+              id="cover-image-input"
             />
+            <label
+              htmlFor="cover-image-input"
+              className={`flex cursor-pointer items-center justify-center gap-2 rounded-[10px] border-2 border-dashed border-[#E5E7EB] px-4 py-3 text-[13px] text-[#6B7280] transition-colors hover:border-[#2563EB] hover:text-[#2563EB] ${uploading ? "opacity-50 pointer-events-none" : ""}`}
+            >
+              <Upload className="h-4 w-4" />
+              {uploading ? "Uploading…" : imageUrl ? "Replace image" : "Upload image (JPG / PNG / WEBP, max 5 MB)"}
+            </label>
+            {uploadError && (
+              <p className="mt-1 text-[12px] text-red-500">{uploadError}</p>
+            )}
           </div>
         </div>
 
@@ -299,10 +344,10 @@ export function PropertyForm({
           </button>
           <button
             onClick={handleSave}
-            disabled={saving}
+            disabled={saving || uploading}
             className="rounded-full bg-[#2563EB] px-6 py-2.5 text-[13px] font-bold text-white transition-colors hover:bg-blue-700 disabled:opacity-60"
           >
-            {saving ? "Saving…" : "Save"}
+            {saving ? "Saving…" : uploading ? "Uploading…" : "Save"}
           </button>
         </div>
       </div>
